@@ -99,3 +99,11 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# used to store downloaded cover images
+images/
+
+# used to store mivie data
+movie.json
+
+.idea/
