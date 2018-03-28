@@ -4,7 +4,7 @@ import scrapy
 from scrapy.http import Request
 from urllib import parse
 
-from DoubanMovieSpider.items import MovieItem
+from DoubanMovieSpider.items import MovieItem, MovieItemLoader
 
 class Top250Spider(scrapy.Spider):
     name = 'top250'
@@ -35,31 +35,23 @@ class Top250Spider(scrapy.Spider):
         pass
 
     def parse_movie_item(self, response):
-        index = response.css('.top250-no::text').extract_first('')
-        title = response.css('div#content h1')
-        name = title.css('span::text').extract_first('')
-        year = title.css('span.year::text').extract_first('').lstrip('(').rstrip(')')
-        cover_url = response.css('#mainpic a img::attr(src)').extract_first('')
-        rating_num = response.css('.rating_num::text').extract_first('')
-        rating_sum = response.css('.rating_people span::text').extract_first('')
-        related_info = response.css('#link-report span::text').extract_first('').strip()
-
-        movie_item = MovieItem()
-        movie_item['page_url'] = response.url
-        movie_item['index'] = index
-        movie_item['name'] = name
-        movie_item['year'] = year
-        movie_item['cover_url'] = [cover_url]
-        # movie_item['director'] = director
+        il = MovieItemLoader(item=MovieItem(), response=response)
+        il.add_value('page_url', response.url)
+        il.add_css('index', '.top250-no::text')
+        il.add_css('name', 'div#content h1 span::text')
+        il.add_css('year', 'div#content h1 span.year::text')
+        il.add_css('cover_url', '#mainpic a img::attr(src)')
         # movie_item['writer'] = writer
-        # movie_item['actors'] = actors
-        # movie_item['type'] = type
-        # movie_item['region'] = region
-        # movie_item['release_date'] = release_date
-        # movie_item['alias'] = alias
-        # movie_item['imdb_link'] = imdb_link
-        movie_item['rating_num'] = rating_num
-        movie_item['rating_sum'] = rating_sum
-        movie_item['quote'] = response.meta.get('quote', '')
-        movie_item['related_info'] = related_info
+        # il.add_css('writer', '.writer')
+        # il.add_css('actors', '.actors')
+        # il.add_css('type', '.type')
+        # il.add_css('region', '.region')
+        # il.add_css('release_date', '.release_date')
+        # il.add_css('alias', '.alias')
+        # il.add_css('imdb_link', '.imdb_link')
+        il.add_css('rating_num', '.rating_num::text')
+        il.add_css('rating_sum', '.rating_sum .rating_people span::text')
+        il.add_value('quote', response.meta.get('quote', ''))
+        il.add_css('related_info', '#link-report span::text')
+        movie_item = il.load_item()
         yield movie_item

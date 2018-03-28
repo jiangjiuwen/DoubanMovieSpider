@@ -6,18 +6,34 @@
 # https://doc.scrapy.org/en/latest/topics/items.html
 
 import scrapy
+from scrapy.loader.processors import MapCompose, TakeFirst, Join
+from scrapy.loader import ItemLoader
 
 
-class DoubanmoviespiderItem(scrapy.Item):
-    # define the fields for your item here like:
-    pass
+def format_str(value):
+    if (value):
+        value = value.replace('\n', '') .strip()
+    return value
+
+
+def return_val(value):
+    return value
+
+
+class MovieItemLoader(ItemLoader):
+    default_output_processor = TakeFirst()
+
 
 class MovieItem(scrapy.Item):
     page_url = scrapy.Field()
     index = scrapy.Field()
     name = scrapy.Field()
-    year = scrapy.Field()
-    cover_url = scrapy.Field()
+    year = scrapy.Field(
+        input_processor=MapCompose(lambda x:x.lstrip('(').rstrip(')'))
+    )
+    cover_url = scrapy.Field(
+        output_processor=MapCompose(return_val)
+    )
     cover_path = scrapy.Field()
     director = scrapy.Field()
     writer = scrapy.Field()
@@ -31,4 +47,7 @@ class MovieItem(scrapy.Item):
     rating_num = scrapy.Field()
     rating_sum = scrapy.Field()
     quote = scrapy.Field()
-    related_info = scrapy.Field()
+    related_info = scrapy.Field(
+        input_processor=MapCompose(format_str),
+        output_processor=Join('\n')
+    )
